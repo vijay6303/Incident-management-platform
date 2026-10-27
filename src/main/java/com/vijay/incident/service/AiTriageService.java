@@ -47,6 +47,11 @@ public class AiTriageService {
     }
 
     public TriageResponse triage(TriageRequest request) {
+        if (apiKey == null || apiKey.isBlank()) {
+                throw new AiTriageException(
+                        "AI triage is not configured. Please try again later."
+                );
+        }
         String prompt = """
                 You are an IT incident triage assistant.
 
