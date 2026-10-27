@@ -68,7 +68,7 @@ public class IncidentService {
 
         return repository.findByStatus(status, pageable);
     }
-    @Cacheable(value = "incident", key = "#id")
+   // @Cacheable(value = "incident", key = "#id")
     public Incident getById(Long id) {
         return repository.findById(id).orElseThrow(() -> new IncidentNotFoundException(id));
     }
@@ -76,29 +76,25 @@ public class IncidentService {
     @Transactional
     public Incident create(CreateIncidentRequest request) {
         Incident incident = new Incident();
-        incident.setReporterEmail(
-            currentUserService.getCurrentUserEmail()
-        );
+         String email = currentUserService.getCurrentUserEmail();
+        incident.setReporterEmail(email);
         incident.setTitle(request.title().trim());
         incident.setDescription(request.description().trim());
         incident.setPriority(request.priority());
         incident.setStatus(IncidentStatus.OPEN);
-        incident.setReporterEmail(request.reporterEmail().trim().toLowerCase());
-        incident.setAssigneeEmail(normalizeEmail(request.assigneeEmail()));
         return repository.save(incident);
     }
 
     @Transactional
     @CacheEvict(value = "incident", key = "#id")
     public Incident update(Long id, UpdateIncidentRequest request) {
-         Incident incident = getById(id);
-        boolean isReporter = currentUserService
-                .getCurrentUserEmail()
-                .equalsIgnoreCase(incident.getReporterEmail());
-
+        Incident incident = getById(id);
+        String currentEmail = currentUserService.getCurrentUserEmail();
+        boolean isReporter = currentEmail != null
+                && incident.getReporterEmail() != null
+                && currentEmail.equalsIgnoreCase(incident.getReporterEmail());
         boolean isSupport = currentUserService.hasRole("SUPPORT");
         boolean isAdmin = currentUserService.hasRole("ADMIN");
-
         if (!isReporter && !isSupport && !isAdmin) {
             throw new org.springframework.security.access.AccessDeniedException(
                     "You are not allowed to update this incident"
@@ -108,10 +104,12 @@ public class IncidentService {
         incident.setDescription(request.description().trim());
         incident.setPriority(request.priority());
         incident.setStatus(request.status());
-        incident.setReporterEmail(request.reporterEmail().trim().toLowerCase());
-        incident.setAssigneeEmail(normalizeEmail(request.assigneeEmail()));
+        if (isSupport || isAdmin) {
+            incident.setAssigneeEmail(normalizeEmail(request.assigneeEmail()));
+        }
         return repository.save(incident);
     }
+
     @CacheEvict(value = "incident", key = "#id")
     public void delete(Long id) {
         Incident incident = getById(id);

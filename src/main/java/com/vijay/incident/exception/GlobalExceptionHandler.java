@@ -1,13 +1,18 @@
 package com.vijay.incident.exception;
 
 import com.vijay.incident.dto.ErrorResponse;
+import com.vijay.incident.service.AiTriageException;
+
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
+import com.vijay.incident.service.AiTriageException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import java.util.Map;
 import java.time.Instant;
 
 @RestControllerAdvice
@@ -56,6 +61,14 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
     }
+
+    @ExceptionHandler(AiTriageException.class)
+        public ResponseEntity<Map<String, String>> handleAiTriageException(
+                AiTriageException ex
+        ) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(Map.of("error", ex.getMessage()));
+        }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(

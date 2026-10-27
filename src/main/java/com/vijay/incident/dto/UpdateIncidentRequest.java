@@ -12,6 +12,5 @@ public record UpdateIncidentRequest(
         @NotBlank @Size(max = 3000) String description,
         @NotNull IncidentPriority priority,
         @NotNull IncidentStatus status,
-        @NotBlank @Email @Size(max = 120) String reporterEmail,
         @Email @Size(max = 120) String assigneeEmail
 ) {}
